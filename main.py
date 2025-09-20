@@ -1,47 +1,62 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import sqlite3
 
 app = Flask(__name__)
 
-# ✅ Complete CORS Configuration - This should fix the issue
-CORS(app, 
-     origins=[
-         "https://demobookvaultui.vercel.app",
-         "https://demobookvault.vercel.app", 
-         "http://localhost:3000",
-         "http://localhost:5173"
-     ],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-     allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
-     supports_credentials=True
-)
+# ✅ Most comprehensive CORS configuration
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "https://demobookvaultui.vercel.app",
+            "https://demobookvault.vercel.app",
+            "http://localhost:3000",
+            "http://localhost:5173"
+        ],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }
+})
 
-# ✅ Additional CORS headers for all responses
+# ✅ Ensure CORS headers on all responses
 @app.after_request
 def after_request(response):
     origin = request.headers.get('Origin')
-    if origin in [
+    allowed_origins = [
         'https://demobookvaultui.vercel.app',
         'https://demobookvault.vercel.app',
         'http://localhost:3000',
         'http://localhost:5173'
-    ]:
+    ]
+    
+    if origin in allowed_origins:
         response.headers['Access-Control-Allow-Origin'] = origin
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
-    response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+    
     return response
 
-# ✅ Handle preflight requests
+# ✅ Handle OPTIONS requests (preflight)
 @app.before_request
 def handle_preflight():
     if request.method == "OPTIONS":
-        response = jsonify({'message': 'OK'})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "*")
-        response.headers.add('Access-Control-Allow-Methods', "*")
-        return response
+        origin = request.headers.get('Origin')
+        allowed_origins = [
+            'https://demobookvaultui.vercel.app',
+            'https://demobookvault.vercel.app',
+            'http://localhost:3000',
+            'http://localhost:5173'
+        ]
+        
+        if origin in allowed_origins:
+            response = jsonify({'status': 'OK'})
+            response.headers['Access-Control-Allow-Origin'] = origin
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+            response.headers['Access-Control-Allow-Credentials'] = 'true'
+            return response
 
 # 🗃️ SQLite connection
 conn = sqlite3.connect('bookvault.db', check_same_thread=False)
@@ -65,10 +80,11 @@ app.register_blueprint(book_bp)
 app.register_blueprint(member_bp)
 app.register_blueprint(analytics_bp)
 
-# ✅ Health check
+# ✅ Health check with explicit CORS
 @app.route('/ping')
+@cross_origin(origins=['https://demobookvaultui.vercel.app', 'https://demobookvault.vercel.app'])
 def ping():
-    return jsonify({"status": "ok"}), 200
+    return jsonify({"status": "ok", "message": "BookVault Backend is running"}), 200
 
 # 🏠 Root
 @app.route('/')
@@ -77,6 +93,7 @@ def home():
 
 # 🖼️ Cover update
 @app.route("/api/update-cover", methods=["POST"])
+@cross_origin(origins=['https://demobookvaultui.vercel.app', 'https://demobookvault.vercel.app'])
 def update_cover():
     data = request.get_json()
     title = data.get("title")
