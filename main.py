@@ -4,15 +4,44 @@ import sqlite3
 
 app = Flask(__name__)
 
-# ✅ Configure CORS properly for your Vercel frontend
-CORS(app, origins=[
-    "https://demobookvaultui.vercel.app/",
-    "http://localhost:3000",  # For local development
-    "http://localhost:5173",  # For Vite local development
-], 
-supports_credentials=True,
-allow_headers=["Content-Type", "Authorization"],
-methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+# ✅ Complete CORS Configuration - This should fix the issue
+CORS(app, 
+     origins=[
+         "https://demobookvaultui.vercel.app",
+         "https://demobookvault.vercel.app", 
+         "http://localhost:3000",
+         "http://localhost:5173"
+     ],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
+     supports_credentials=True
+)
+
+# ✅ Additional CORS headers for all responses
+@app.after_request
+def after_request(response):
+    origin = request.headers.get('Origin')
+    if origin in [
+        'https://demobookvaultui.vercel.app',
+        'https://demobookvault.vercel.app',
+        'http://localhost:3000',
+        'http://localhost:5173'
+    ]:
+        response.headers['Access-Control-Allow-Origin'] = origin
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    return response
+
+# ✅ Handle preflight requests
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        response = jsonify({'message': 'OK'})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', "*")
+        response.headers.add('Access-Control-Allow-Methods', "*")
+        return response
 
 # 🗃️ SQLite connection
 conn = sqlite3.connect('bookvault.db', check_same_thread=False)
