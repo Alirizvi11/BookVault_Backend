@@ -2,17 +2,16 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import sqlite3
 
-# 🚀 Initialize Flask app
 app = Flask(__name__)
 
-# ✅ Enable CORS for Vercel frontend
-CORS(app, resources={r"/*": {"origins": ["https://demobookvault.vercel.app"]}}, supports_credentials=True)
+# ✅ Allow all origins for now (you can restrict later)
+CORS(app)
 
-# 🗃️ Initialize SQLite connection
+# 🗃️ SQLite connection
 conn = sqlite3.connect('bookvault.db', check_same_thread=False)
 cursor = conn.cursor()
 
-# 🔗 Import all route Blueprints
+# 🔗 Import Blueprints
 from app.routes.issue_book import issue_book_bp
 from app.routes.return_book import return_book_bp
 from app.routes.transactions import transactions_bp
@@ -30,17 +29,17 @@ app.register_blueprint(book_bp)
 app.register_blueprint(member_bp)
 app.register_blueprint(analytics_bp)
 
-# ✅ Health check route
+# ✅ Health check
 @app.route('/ping')
 def ping():
     return jsonify({"status": "ok"}), 200
 
-# 🏠 Root route
+# 🏠 Root
 @app.route('/')
 def home():
     return "📚 BookVault Backend is Running ✅"
 
-# 🖼️ Cover update route
+# 🖼️ Cover update
 @app.route("/api/update-cover", methods=["POST"])
 def update_cover():
     data = request.get_json()
@@ -58,7 +57,7 @@ def update_cover():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 🏁 Start the server
+# 🏁 Start server
 if __name__ == '__main__':
     import os
     port = int(os.environ.get("PORT", 5000))
