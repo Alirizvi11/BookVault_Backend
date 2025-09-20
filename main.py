@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+CORS(app, origins=["https://demobookvault.vercel.app"], supports_credentials=True)
 import sqlite3
 
 # 🔗 Import all route Blueprints
