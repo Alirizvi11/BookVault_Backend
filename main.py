@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 # ✅ Configure CORS properly for your Vercel frontend
 CORS(app, origins=[
-    "https://demobookvault.vercel.app",
+    "https://demobookvaultui.vercel.app/",
     "http://localhost:3000",  # For local development
     "http://localhost:5173",  # For Vite local development
 ], 
