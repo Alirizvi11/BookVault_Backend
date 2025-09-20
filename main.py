@@ -4,8 +4,15 @@ import sqlite3
 
 app = Flask(__name__)
 
-# ✅ Allow all origins for now (you can restrict later)
-CORS(app)
+# ✅ Configure CORS properly for your Vercel frontend
+CORS(app, origins=[
+    "https://demobookvault.vercel.app",
+    "http://localhost:3000",  # For local development
+    "http://localhost:5173",  # For Vite local development
+], 
+supports_credentials=True,
+allow_headers=["Content-Type", "Authorization"],
+methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
 # 🗃️ SQLite connection
 conn = sqlite3.connect('bookvault.db', check_same_thread=False)
@@ -45,7 +52,7 @@ def update_cover():
     data = request.get_json()
     title = data.get("title")
     cover_url = data.get("cover_url")
-
+    
     try:
         cursor.execute("""
             UPDATE books
